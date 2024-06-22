@@ -19,7 +19,9 @@ export async function retrieveAnswerFromRagChain(
   const retriever = vectorStore.asRetriever()
   const retrievedDocs = await retriever.invoke(question)
 
-  const prompt = await pull<ChatPromptTemplate>('rlm/rag-prompt')
+  const prompt = process.env.PROMPT_TEMPLATE
+    ? ChatPromptTemplate.fromTemplate(process.env.PROMPT_TEMPLATE)
+    : await pull<ChatPromptTemplate>('rlm/rag-prompt')
   const llm = new ChatOpenAI({
     model: process.env.OPENAI_LLM_MODEL,
     temperature: 0,
