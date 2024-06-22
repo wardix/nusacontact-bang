@@ -8,12 +8,15 @@ const app = new Hono()
 
 app.use(logger())
 
-app.use('/bang', basicAuth({
-  verifyUser: (username, password, _c) => {
-    const validUser = JSON.parse(process.env.BASIC_USERS!)
-    return validUser.includes(`${username}:${password}`)
-  }
-}))
+app.use(
+  '/bang',
+  basicAuth({
+    verifyUser: (username, password, _c) => {
+      const validUser = JSON.parse(process.env.BASIC_USERS!)
+      return validUser.includes(`${username}:${password}`)
+    },
+  }),
+)
 
 app.get('/', (context) => {
   return context.text('Hello Hono!')

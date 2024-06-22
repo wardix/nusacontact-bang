@@ -1,5 +1,5 @@
-import { sendMessageReply } from "./nusacontact"
-import { retrieveAnswerFromRagChain } from "./rag"
+import { sendMessageReply } from './nusacontact'
+import { retrieveAnswerFromRagChain } from './rag'
 
 export async function processBangAiRequest(
   sender: string,
