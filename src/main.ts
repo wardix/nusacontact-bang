@@ -19,7 +19,7 @@ app.use(
 )
 
 app.get('/', (context) => {
-  return context.text('Hello Hono!')
+  return context.text('OK')
 })
 
 app.post('/bang', async (context) => {
