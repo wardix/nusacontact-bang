@@ -12,7 +12,7 @@ export async function retrieveAnswerFromRagServer(
         Authorization: authorizationHeader,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ prompt: question }),
     })
     const data = await response.json()
     return data.response
