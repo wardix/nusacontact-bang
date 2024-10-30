@@ -6,6 +6,9 @@ export async function sendMessageReply(
   id: string,
   via: string,
 ) {
+  const maxRetries = 5 // Set a maximum retry limit
+  let attempts = 0
+
   try {
     const nusacontactPhoneNumberIds = JSON.parse(
       process.env.NUSACONTACT_PHONE_NUMBER_IDS || '[]',
@@ -37,15 +40,25 @@ export async function sendMessageReply(
       'X-Api-Key': apiKey,
     }
 
-    const response = await axios.post(url, data, { headers })
-
-    if (response.status === 200) {
-      console.log('Message sent successfully')
-      return response.data // Returning response data directly
-    } else {
-      console.error(`Failed to send message. Status: ${response.status}`)
-      return null
+    while (attempts < maxRetries) {
+      const response = await axios.post(url, data, { headers })
+      if (response.status === 200) {
+        console.log('Message sent successfully')
+        return response.data
+      } else if (response.status === 429) {
+        attempts++
+        console.warn(`Rate limit hit. Retrying request... Attempt ${attempts}`)
+        await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
+      } else {
+        console.error(`Failed to send message. Status: ${response.status}`)
+        return null
+      }
     }
+
+    console.error(
+      'Max retries reached. Failed to send message after multiple attempts.',
+    )
+    return null
   } catch (error) {
     console.error('Error:', error)
     return null
