@@ -2,8 +2,8 @@ import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { basicAuth } from 'hono/basic-auth'
 import { processBangAiRequest } from './ai'
+import { PORT } from './config'
 
-const port = process.env.PORT || 3000
 const app = new Hono()
 
 app.use(logger())
@@ -40,6 +40,6 @@ app.post('/bang', async (context) => {
 })
 
 export default {
-  port: +port,
+  port: Number(PORT),
   fetch: app.fetch,
 }
