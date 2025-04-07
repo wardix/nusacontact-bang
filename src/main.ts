@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { basicAuth } from 'hono/basic-auth'
 import { processBangAiRequest } from './ai'
-import { PORT } from './config'
+import { DEFAULT_COMMAND, PORT } from './config'
 
 const app = new Hono()
 
@@ -25,9 +25,10 @@ app.get('/', (context) => {
 app.post('/bang', async (context) => {
   const { id, message, sender, via } = await context.req.json()
 
-  const firstSpaceIndex = message.indexOf(' ')
-  const command = message.substring(0, firstSpaceIndex).toLowerCase()
-  const commandArguments = message.substring(firstSpaceIndex + 1)
+  const commandMessage = message.startsWith('!') ? message : `${DEFAULT_COMMAND} ${message}`
+  const firstSpaceIndex = commandMessage.indexOf(' ')
+  const command = commandMessage.substring(0, firstSpaceIndex).toLowerCase()
+  const commandArguments = commandMessage.substring(firstSpaceIndex + 1)
 
   switch (command) {
     case '!ai':
