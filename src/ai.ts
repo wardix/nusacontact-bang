@@ -7,6 +7,6 @@ export async function processBangAiRequest(
   id: string,
   via: string,
 ) {
-  const answer = await retrieveAnswerFromRagServer(message)
+  const answer = await retrieveAnswerFromRagServer(message, sender)
   sendMessageReply(sender, answer, id, via)
 }
