@@ -25,7 +25,9 @@ app.get('/', (context) => {
 app.post('/bang', async (context) => {
   const { id, message, sender, via } = await context.req.json()
 
-  const commandMessage = message.startsWith('!') ? message : `${DEFAULT_COMMAND} ${message}`
+  const commandMessage = message.startsWith('!')
+    ? message
+    : `${DEFAULT_COMMAND} ${message}`
   const firstSpaceIndex = commandMessage.indexOf(' ')
   const command = commandMessage.substring(0, firstSpaceIndex).toLowerCase()
   const commandArguments = commandMessage.substring(firstSpaceIndex + 1)

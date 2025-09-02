@@ -1,4 +1,8 @@
-import { RAG_SERVER_API_URL, RAG_SERVER_AUTHZ_HEADER } from './config'
+import {
+  ORGANIZATION_ID,
+  RAG_SERVER_API_URL,
+  RAG_SERVER_AUTHZ_HEADER,
+} from './config'
 
 export async function retrieveAnswerFromRagServer(
   question: string,
@@ -13,10 +17,14 @@ export async function retrieveAnswerFromRagServer(
         Authorization: authorizationHeader,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ prompt: question, session }),
+      body: JSON.stringify({
+        question,
+        session_id: session,
+        organization_id: ORGANIZATION_ID,
+      }),
     })
     const data = await response.json()
-    return data.response
+    return data.data[0]
   } catch (error) {
     console.error(error)
   }
