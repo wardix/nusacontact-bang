@@ -1,4 +1,12 @@
 import axios from 'axios'
+import {
+  NUSACONTACT_API_KEY,
+  NUSACONTACT_API_TEST_KEY,
+  NUSACONTACT_MAX_RETRIES,
+  NUSACONTACT_MESSAGES_API_TEST_URL,
+  NUSACONTACT_MESSAGES_API_URL,
+  NUSACONTACT_PHONE_NUMBER_IDS,
+} from './config'
 
 export async function sendMessageReply(
   to: string,
@@ -6,20 +14,14 @@ export async function sendMessageReply(
   id: string,
   via: string,
 ) {
-  const maxRetries = 5 // Set a maximum retry limit
   let attempts = 0
 
   try {
-    const nusacontactPhoneNumberIds = JSON.parse(
-      process.env.NUSACONTACT_PHONE_NUMBER_IDS || '[]',
-    )
-    const isProduction = nusacontactPhoneNumberIds.includes(via)
+    const isProduction = NUSACONTACT_PHONE_NUMBER_IDS.includes(via)
     const apiUrl = isProduction
-      ? process.env.NUSACONTACT_MESSAGES_API_URL
-      : process.env.NUSACONTACT_MESSAGES_API_TEST_URL
-    const apiKey = isProduction
-      ? process.env.NUSACONTACT_API_KEY
-      : process.env.NUSACONTACT_API_TEST_KEY
+      ? NUSACONTACT_MESSAGES_API_URL
+      : NUSACONTACT_MESSAGES_API_TEST_URL
+    const apiKey = isProduction ? NUSACONTACT_API_KEY : NUSACONTACT_API_TEST_KEY
 
     if (!apiUrl || !apiKey) {
       throw new Error('Missing API URL or API Key in environment variables.')
@@ -40,7 +42,7 @@ export async function sendMessageReply(
       'X-Api-Key': apiKey,
     }
 
-    while (attempts < maxRetries) {
+    while (attempts < NUSACONTACT_MAX_RETRIES) {
       const response = await axios.post(url, data, { headers })
       if (response.status === 200) {
         console.log('Message sent successfully')
