@@ -8,61 +8,76 @@ import {
   NUSACONTACT_PHONE_NUMBER_IDS,
 } from './config'
 
-export async function sendMessageReply(
+async function sendMessage(to: string, messageData: any, via: string) {
+  let attempts = 0
+  const isProduction = NUSACONTACT_PHONE_NUMBER_IDS.includes(via)
+  const apiUrl = isProduction
+    ? NUSACONTACT_MESSAGES_API_URL
+    : NUSACONTACT_MESSAGES_API_TEST_URL
+  const apiKey = isProduction ? NUSACONTACT_API_KEY : NUSACONTACT_API_TEST_KEY
+
+  const url = `${apiUrl}?phone_number_id=${via}`
+  const data = {
+    ...messageData,
+    to,
+  }
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Api-Key': apiKey,
+  }
+  while (attempts < NUSACONTACT_MAX_RETRIES) {
+    const response = await axios.post(url, data, { headers })
+    if (response.status === 200) {
+      console.log('Message sent successfully')
+      return response.data
+    }
+    if (response.status === 429) {
+      attempts++
+      console.warn(`Rate limit hit. Retrying request... Attempt ${attempts}`)
+      await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
+    } else {
+      console.error(`Failed to send message. Status: ${response.status}`)
+      return null
+    }
+  }
+}
+
+export async function sendTextMessage(
   to: string,
   message: string,
-  id: string,
   via: string,
 ) {
-  let attempts = 0
-
-  try {
-    const isProduction = NUSACONTACT_PHONE_NUMBER_IDS.includes(via)
-    const apiUrl = isProduction
-      ? NUSACONTACT_MESSAGES_API_URL
-      : NUSACONTACT_MESSAGES_API_TEST_URL
-    const apiKey = isProduction ? NUSACONTACT_API_KEY : NUSACONTACT_API_TEST_KEY
-
-    if (!apiUrl || !apiKey) {
-      throw new Error('Missing API URL or API Key in environment variables.')
-    }
-
-    const url = `${apiUrl}?phone_number_id=${via}`
-    const data = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to,
-      context: { message_id: id },
-      type: 'text',
-      text: { body: message },
-    }
-
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Api-Key': apiKey,
-    }
-
-    while (attempts < NUSACONTACT_MAX_RETRIES) {
-      const response = await axios.post(url, data, { headers })
-      if (response.status === 200) {
-        console.log('Message sent successfully')
-        return response.data
-      } else if (response.status === 429) {
-        attempts++
-        console.warn(`Rate limit hit. Retrying request... Attempt ${attempts}`)
-        await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
-      } else {
-        console.error(`Failed to send message. Status: ${response.status}`)
-        return null
-      }
-    }
-
-    console.error(
-      'Max retries reached. Failed to send message after multiple attempts.',
-    )
-    return null
-  } catch (error) {
-    console.error('Error:', error)
-    return null
+  const data = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    type: 'text',
+    text: { body: message },
   }
+  return await sendMessage(to, data, via)
+}
+
+export async function sendFlowMessage(to: string, flow: any, via: string) {
+  const data = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    type: 'interactive',
+    interactive: flow,
+  }
+  return await sendMessage(to, data, via)
+}
+
+export async function sendTextMessageReply(
+  to: string,
+  message: string,
+  messageId: string,
+  via: string,
+) {
+  const data = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    context: { message_id: messageId },
+    type: 'text',
+    text: { body: message },
+  }
+  return await sendMessage(to, data, via)
 }

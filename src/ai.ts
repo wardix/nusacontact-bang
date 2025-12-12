@@ -1,4 +1,4 @@
-import { sendMessageReply } from './nusacontact'
+import { sendTextMessageReply } from './nusacontact'
 import { retrieveAnswerFromRagServer } from './rag'
 
 export async function processBangAiRequest(
@@ -8,5 +8,5 @@ export async function processBangAiRequest(
   via: string,
 ) {
   const answer = await retrieveAnswerFromRagServer(message, sender)
-  sendMessageReply(sender, answer, id, via)
+  sendTextMessageReply(sender, answer, id, via)
 }
