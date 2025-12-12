@@ -7,7 +7,6 @@ import {
   processBangReturnBookRequest,
 } from './book'
 import { DEFAULT_COMMAND, PORT } from './config'
-import { BookFlow } from './book'
   
 const app = new Hono()
 
@@ -40,10 +39,6 @@ app.post('/bang', async (context) => {
   switch (command) {
     case '!ai':
       processBangAiRequest(sender, commandArguments, id, via)
-    case '!pinjam_buku':
-      BookFlow.assign(sender, id, via)
-    case '!kembalikan_buku':
-      BookFlow.return(sender, id, via)
       break
     case '!pinjam_buku':
       processBangBorrowBookRequest(sender, via)
