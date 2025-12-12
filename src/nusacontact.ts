@@ -1,90 +1,83 @@
-import axios, { AxiosInstance } from 'axios'
+import axios from 'axios'
+import {
+  NUSACONTACT_API_KEY,
+  NUSACONTACT_API_TEST_KEY,
+  NUSACONTACT_MAX_RETRIES,
+  NUSACONTACT_MESSAGES_API_TEST_URL,
+  NUSACONTACT_MESSAGES_API_URL,
+  NUSACONTACT_PHONE_NUMBER_IDS,
+} from './config'
 
-const PHONE_IDS: string[] = JSON.parse(process.env.NUSACONTACT_PHONE_NUMBER_IDS || '[]')
+async function sendMessage(to: string, messageData: any, via: string) {
+  let attempts = 0
+  const isProduction = NUSACONTACT_PHONE_NUMBER_IDS.includes(via)
+  const apiUrl = isProduction
+    ? NUSACONTACT_MESSAGES_API_URL
+    : NUSACONTACT_MESSAGES_API_TEST_URL
+  const apiKey = isProduction ? NUSACONTACT_API_KEY : NUSACONTACT_API_TEST_KEY
 
-const API_URL = process.env.NUSACONTACT_MESSAGES_API_URL || ''
-const API_URL_TEST = process.env.NUSACONTACT_MESSAGES_API_TEST_URL || ''
-
-const API_KEY = process.env.NUSACONTACT_API_KEY || ''
-const API_KEY_TEST = process.env.NUSACONTACT_API_TEST_KEY || ''
-
-const MAX_RETRIES = 5
-
-export class NusaContact {
-    private static getClient(via: string): AxiosInstance {
-        const isProd = PHONE_IDS.includes(via)
-
-        return axios.create({
-            baseURL: isProd ? API_URL : API_URL_TEST,
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "X-Api-Key": isProd ? API_KEY : API_KEY_TEST,
-            }
-        })
+  const url = `${apiUrl}?phone_number_id=${via}`
+  const data = {
+    ...messageData,
+    to,
+  }
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Api-Key': apiKey,
+  }
+  while (attempts < NUSACONTACT_MAX_RETRIES) {
+    const response = await axios.post(url, data, { headers })
+    if (response.status === 200) {
+      console.log('Message sent successfully')
+      return response.data
     }
-
-    private static async send(via: string, payload: any) {
-        const client = this.getClient(via)
-        let attempts = 0
-
-        while (attempts < MAX_RETRIES) {
-            try {
-                const res = await client.post('', payload, {
-                    params: { phone_number_id: via }
-                })
-
-                if (res.status === 200) return res.data
-                if (res.status === 429) {
-                    attempts++
-                    await new Promise(r => setTimeout(r, 1000))
-                    continue
-                }
-
-                return null
-            } catch (err: any) {
-                attempts++
-                const status = err?.response?.status
-
-                if (status === 429 && attempts < MAX_RETRIES) {
-                    await new Promise(r => setTimeout(r, 1000))
-                    continue
-                }
-
-                return null
-            }
-        }
-
-        return null
+    if (response.status === 429) {
+      attempts++
+      console.warn(`Rate limit hit. Retrying request... Attempt ${attempts}`)
+      await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
+    } else {
+      console.error(`Failed to send message. Status: ${response.status}`)
+      return null
     }
+  }
+}
 
-    static async sendMessageReply(to: string, message: string, id: string, via: string) {
-        const payload = {
-            messaging_product: "whatsapp",
-            recipient_type: "individual",
-            to,
-            context: { message_id: id },
-            type: "text",
-            text: { body: message }
-        }
+export async function sendTextMessage(
+  to: string,
+  message: string,
+  via: string,
+) {
+  const data = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    type: 'text',
+    text: { body: message },
+  }
+  return await sendMessage(to, data, via)
+}
 
-        return this.send(via, payload)
-    }
+export async function sendFlowMessage(to: string, flow: any, via: string) {
+  const data = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    type: 'interactive',
+    interactive: flow,
+  }
+  return await sendMessage(to, data, via)
+}
 
-    static async sendMessage(
-        to: string,
-        via: string,
-        type: string,
-        params: any,
-        id: string
-    ) {
-        const payload = {
-            messaging_product: "whatsapp",
-            to,
-            context: { message_id: id },
-            type,
-            [type]:params
-        }
-        return this.send(via, payload)
-    }
+export async function sendTextMessageReply(
+  to: string,
+  message: string,
+  messageId: string,
+  via: string,
+) {
+  const data = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    context: { message_id: messageId },
+    type: 'text',
+    text: { body: message },
+  }
+  return await sendMessage(to, data, via)
 }
