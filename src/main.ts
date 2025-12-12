@@ -2,6 +2,10 @@ import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { basicAuth } from 'hono/basic-auth'
 import { processBangAiRequest } from './ai'
+import {
+  processBangBorrowBookRequest,
+  processBangReturnBookRequest,
+} from './book'
 import { DEFAULT_COMMAND, PORT } from './config'
 
 const app = new Hono()
@@ -35,6 +39,12 @@ app.post('/bang', async (context) => {
   switch (command) {
     case '!ai':
       processBangAiRequest(sender, commandArguments, id, via)
+      break
+    case '!pinjam_buku':
+      processBangBorrowBookRequest(sender, via)
+      break
+    case '!kembalikan_buku':
+      processBangReturnBookRequest(sender, via)
       break
     default:
   }
