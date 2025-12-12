@@ -7,7 +7,7 @@ import {
   processBangReturnBookRequest,
 } from './book'
 import { DEFAULT_COMMAND, PORT } from './config'
-  
+
 const app = new Hono()
 
 app.use(logger())
@@ -33,8 +33,12 @@ app.post('/bang', async (context) => {
     ? message
     : `${DEFAULT_COMMAND} ${message}`
   const firstSpaceIndex = commandMessage.indexOf(' ')
-  const command = commandMessage.substring(0, firstSpaceIndex).toLowerCase()
-  const commandArguments = commandMessage.substring(firstSpaceIndex + 1)
+  const command =
+    firstSpaceIndex != -1
+      ? commandMessage.substring(0, firstSpaceIndex).toLowerCase()
+      : commandMessage
+  const commandArguments =
+    firstSpaceIndex != -1 ? commandMessage.substring(firstSpaceIndex + 1) : ''
 
   switch (command) {
     case '!ai':
